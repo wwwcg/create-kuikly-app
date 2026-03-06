@@ -1,0 +1,39 @@
+package {{packageName}}.module
+
+import android.util.Log
+import android.widget.Toast
+import com.tencent.kuikly.core.render.android.export.KuiklyRenderBaseModule
+import com.tencent.kuikly.core.render.android.export.KuiklyRenderCallback
+import {{packageName}}.KRApplication
+import org.json.JSONObject
+import java.text.SimpleDateFormat
+import java.util.Date
+
+class KRBridgeModule : KuiklyRenderBaseModule() {
+
+    override fun call(method: String, params: String?, callback: KuiklyRenderCallback?): Any? {
+        return when (method) {
+            "closePage" -> activity?.finish()
+            "openPage" -> { /* TODO: implement navigation */ }
+            "toast" -> {
+                val paramJSON = JSONObject(params ?: "{}")
+                Toast.makeText(KRApplication.application, paramJSON.optString("content"), Toast.LENGTH_SHORT).show()
+            }
+            "log" -> {
+                val paramJSON = JSONObject(params ?: "{}")
+                Log.i("KuiklyRender", paramJSON.optString("content"))
+            }
+            "currentTimestamp" -> (System.currentTimeMillis()).toString()
+            "dateFormatter" -> {
+                val paramJSON = JSONObject(params ?: "{}")
+                val data = Date(paramJSON.optLong("timeStamp"))
+                SimpleDateFormat(paramJSON.optString("format")).format(data)
+            }
+            else -> callback?.invoke(mapOf("code" to -1, "message" to "Method not found"))
+        }
+    }
+
+    companion object {
+        const val MODULE_NAME = "HRBridgeModule"
+    }
+}

@@ -1,0 +1,31 @@
+import UIKit
+
+class KuiklyViewController: UIViewController {
+
+    private var pageName: String = "HelloWorld"
+    private var pageData: [String: Any] = [:]
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        view.backgroundColor = .white
+        setupKuiklyView()
+    }
+
+    private func setupKuiklyView() {
+        // Initialize Kuikly render view
+        let renderView = KuiklyRenderView()
+        renderView.frame = view.bounds
+        renderView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        view.addSubview(renderView)
+
+        var params = pageData
+        params["pageName"] = pageName
+        renderView.loadPage(pageName, pageData: params)
+    }
+
+    convenience init(pageName: String, pageData: [String: Any] = [:]) {
+        self.init()
+        self.pageName = pageName
+        self.pageData = pageData
+    }
+}

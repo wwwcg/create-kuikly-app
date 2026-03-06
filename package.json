@@ -1,0 +1,58 @@
+{
+  "name": "create-kuikly-app",
+  "version": "0.1.0",
+  "description": "CLI tool to create Kuikly cross-platform projects. AI Agent friendly.",
+  "keywords": [
+    "kuikly",
+    "kmp",
+    "kotlin-multiplatform",
+    "cross-platform",
+    "cli",
+    "scaffold",
+    "ai-agent"
+  ],
+  "author": "Kuikly Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/anthropics/create-kuikly-app"
+  },
+  "bin": {
+    "create-kuikly-app": "./bin/kuikly.js",
+    "kuikly": "./bin/kuikly.js"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "bin",
+    "templates"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "start": "node dist/index.js",
+    "lint": "eslint src/",
+    "prepublishOnly": "npm run build",
+    "test": "node --test dist/**/*.test.js"
+  },
+  "dependencies": {
+    "commander": "^12.1.0",
+    "handlebars": "^4.7.8",
+    "tar": "^7.4.0",
+    "chalk": "^4.1.2",
+    "ora": "^5.4.1",
+    "node-fetch": "^2.7.0",
+    "semver": "^7.6.3"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "@types/node-fetch": "^2.6.11",
+    "@types/semver": "^7.5.8",
+    "@types/tar": "^6.1.13",
+    "typescript": "^5.5.0"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}

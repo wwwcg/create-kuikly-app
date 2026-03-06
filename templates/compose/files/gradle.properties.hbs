@@ -1,0 +1,21 @@
+#Gradle
+org.gradle.jvmargs=-Xmx2048M -Dfile.encoding=UTF-8 -Dkotlin.daemon.jvm.options\="-Xmx2048M"
+
+#Kotlin
+kotlin.code.style=official
+
+#Android
+android.useAndroidX=true
+android.nonTransitiveRClass=true
+android.enableJetifier=true
+android.suppressUnsupportedCompileSdk=34
+
+#MPP
+kotlin.mpp.enableCInteropCommonization=true
+kotlin.mpp.androidSourceSetLayoutVersion=2
+kotlin.mpp.applyDefaultHierarchyTemplate=false
+
+ksp.incremental=false
+{{#if isCompose}}
+compose.ios.resources.sync=false
+{{/if}}

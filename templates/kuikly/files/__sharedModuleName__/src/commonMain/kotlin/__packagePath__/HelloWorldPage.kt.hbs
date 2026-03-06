@@ -1,0 +1,37 @@
+package {{packageName}}
+
+import com.tencent.kuikly.core.annotations.Page
+import com.tencent.kuikly.core.base.Color
+import com.tencent.kuikly.core.base.ViewBuilder
+import com.tencent.kuikly.core.views.Text
+import {{packageName}}.base.BasePager
+
+@Page("HelloWorld", supportInLocal = true)
+internal class HelloWorldPage : BasePager() {
+
+    override fun body(): ViewBuilder {
+        return {
+            attr {
+                backgroundColor(Color.WHITE)
+                allCenter()
+            }
+
+            Text {
+                attr {
+                    fontSize(24f)
+                    text("Hello, {{projectName}}!")
+                    color(Color.BLACK)
+                }
+            }
+
+            Text {
+                attr {
+                    fontSize(14f)
+                    marginTop(10f)
+                    text("Powered by Kuikly")
+                    color(Color(0xFF888888))
+                }
+            }
+        }
+    }
+}

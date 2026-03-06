@@ -1,0 +1,29 @@
+{
+  "name": "kuikly",
+  "version": "1.0.0",
+  "description": "Standard Kuikly DSL project template with Android, iOS, and HarmonyOS support",
+  "variables": {
+    "projectName": { "description": "Project name", "required": true },
+    "packageName": { "description": "Java/Kotlin package name", "required": true },
+    "sharedModuleName": { "description": "Shared KMP module name", "default": "shared" },
+    "androidAppName": { "description": "Android app module name", "default": "androidApp" },
+    "iosAppName": { "description": "iOS app module name", "default": "iosApp" },
+    "ohosAppName": { "description": "HarmonyOS app module name", "default": "ohosApp" },
+    "artifactName": { "description": "Published artifact name", "default": "shared" },
+    "includeH5": { "description": "Include H5 web app", "default": "false" },
+    "includeMiniApp": { "description": "Include mini program app", "default": "false" }
+  },
+  "postCreate": [
+    {
+      "description": "Download Gradle wrapper",
+      "command": "gradle wrapper --gradle-version {{gradleVersion}} --distribution-type bin || true",
+      "optional": true
+    },
+    {
+      "description": "Install iOS CocoaPods dependencies",
+      "command": "cd {{iosAppName}} && pod install --repo-update || true",
+      "optional": true,
+      "platform": "darwin"
+    }
+  ]
+}

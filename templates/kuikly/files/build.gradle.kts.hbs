@@ -1,0 +1,18 @@
+plugins {
+    //trick: for the same plugin versions in all sub-modules
+    id("com.android.application").version("{{agpVersion}}").apply(false)
+    id("com.android.library").version("{{agpVersion}}").apply(false)
+    kotlin("android").version("{{kotlinVersion}}").apply(false)
+    kotlin("multiplatform").version("{{kotlinVersion}}").apply(false)
+    id("com.google.devtools.ksp").version("{{kspVersion}}").apply(false)
+{{#if isCompose}}
+    id("org.jetbrains.compose").version("{{composeVersion}}").apply(false)
+    kotlin("plugin.compose").version("{{kotlinVersion}}").apply(false)
+{{/if}}
+}
+
+buildscript {
+    dependencies {
+        classpath(BuildPlugin.kuikly)
+    }
+}

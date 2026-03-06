@@ -1,0 +1,13 @@
+plugins {
+    id("com.android.application").version("{{agpVersion}}").apply(false)
+    id("com.android.library").version("{{agpVersion}}").apply(false)
+    kotlin("android").version("{{kotlinVersion}}").apply(false)
+    kotlin("multiplatform").version("{{kotlinVersion}}").apply(false)
+    id("com.google.devtools.ksp").version("{{kspVersion}}").apply(false)
+}
+
+buildscript {
+    dependencies {
+        classpath(BuildPlugin.kuikly)
+    }
+}

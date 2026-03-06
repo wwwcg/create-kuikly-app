@@ -1,0 +1,26 @@
+name: {{iosAppName}}
+options:
+  bundleIdPrefix: {{packageName}}
+  deploymentTarget:
+    iOS: "14.1"
+  xcodeVersion: "15.0"
+
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    SWIFT_OBJC_BRIDGING_HEADER: "$(SRCROOT)/{{iosAppName}}-Bridging-Header.h"
+
+targets:
+  {{iosAppName}}:
+    type: application
+    platform: iOS
+    sources:
+      - Sources
+    settings:
+      base:
+        INFOPLIST_FILE: Sources/Info.plist
+        PRODUCT_BUNDLE_IDENTIFIER: {{packageName}}
+        MARKETING_VERSION: "1.0.0"
+        CURRENT_PROJECT_VERSION: "1"
+    dependencies: []
+    postBuildScripts: []

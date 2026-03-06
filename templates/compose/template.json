@@ -1,0 +1,21 @@
+{
+  "name": "compose",
+  "version": "1.0.0",
+  "description": "Kuikly Compose DSL project template with Jetpack Compose-style API",
+  "variables": {
+    "projectName": { "description": "Project name", "required": true },
+    "packageName": { "description": "Java/Kotlin package name", "required": true },
+    "sharedModuleName": { "description": "Shared KMP module name", "default": "shared" },
+    "androidAppName": { "description": "Android app module name", "default": "androidApp" },
+    "iosAppName": { "description": "iOS app module name", "default": "iosApp" },
+    "ohosAppName": { "description": "HarmonyOS app module name", "default": "ohosApp" },
+    "artifactName": { "description": "Published artifact name", "default": "shared" }
+  },
+  "postCreate": [
+    {
+      "description": "Download Gradle wrapper",
+      "command": "gradle wrapper --gradle-version {{gradleVersion}} --distribution-type bin || true",
+      "optional": true
+    }
+  ]
+}

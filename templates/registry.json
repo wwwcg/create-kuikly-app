@@ -1,0 +1,27 @@
+{
+  "version": "1.0.0",
+  "baseUrl": "https://raw.githubusercontent.com/nicosResOrg/create-kuikly-app/main/templates",
+  "kuiklyVersions": {
+    "latest": "2.7.0",
+    "supported": ["2.7.0"]
+  },
+  "kotlinVersions": {
+    "latest": "2.1.21",
+    "supported": ["1.9.22", "2.1.21"]
+  },
+  "templates": [
+    {
+      "name": "kuikly",
+      "displayName": "Kuikly DSL",
+      "description": "Standard Kuikly DSL project with full platform support (Android, iOS, HarmonyOS)",
+      "version": "1.0.0",
+      "default": true
+    },
+    {
+      "name": "compose",
+      "displayName": "Compose DSL",
+      "description": "Kuikly Compose DSL project with Jetpack Compose-style API",
+      "version": "1.0.0"
+    }
+  ]
+}

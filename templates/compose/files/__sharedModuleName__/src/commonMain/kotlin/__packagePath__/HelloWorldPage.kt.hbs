@@ -1,0 +1,33 @@
+package {{packageName}}
+
+import com.tencent.kuikly.core.annotations.Page
+import com.tencent.kuikly.compose.foundation.layout.Arrangement
+import com.tencent.kuikly.compose.foundation.layout.Column
+import com.tencent.kuikly.compose.foundation.layout.fillMaxSize
+import com.tencent.kuikly.compose.material3.Text
+import com.tencent.kuikly.compose.runtime.Composable
+import com.tencent.kuikly.compose.ui.Alignment
+import com.tencent.kuikly.compose.ui.Modifier
+import com.tencent.kuikly.compose.ui.graphics.Color
+import com.tencent.kuikly.compose.ui.unit.sp
+
+@Page("HelloWorld")
+@Composable
+internal fun HelloWorldPage() {
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = "Hello, {{projectName}}!",
+            fontSize = 24.sp,
+            color = Color.Black
+        )
+        Text(
+            text = "Powered by Kuikly Compose",
+            fontSize = 14.sp,
+            color = Color.Gray
+        )
+    }
+}
