@@ -121,9 +121,9 @@ async function previewAndroid(projectDir: string, options: PreviewOptions): Prom
   }
 
   // Build the launch intent
-  const page = options.page || 'router';
-  // KuiklyRenderActivity expects the page name as an intent extra
-  const launchCmd = `adb -s ${deviceSerial} shell am start -n ${appId}/.KuiklyRenderActivity --es page "${page}"`;
+  const page = options.page || 'HelloWorld';
+  // KuiklyRenderActivity expects the page name as intent extra "pageName"
+  const launchCmd = `adb -s ${deviceSerial} shell am start -n ${appId}/.KuiklyRenderActivity --es pageName "${page}"`;
   await execAsync(launchCmd);
 
   // Wait for the app to render
