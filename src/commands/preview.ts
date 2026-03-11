@@ -178,7 +178,7 @@ async function previewIos(projectDir: string, options: PreviewOptions): Promise<
     };
   }
 
-  const totalSteps = options.skipBuild ? 4 : 6;
+  const totalSteps = options.skipBuild ? 4 : 8;
   let step = 0;
 
   // ─── Step 1: Check tools ────────────────────────────────
@@ -204,11 +204,38 @@ async function previewIos(projectDir: string, options: PreviewOptions): Promise<
   // Open Simulator.app so the device window is visible
   await execAsync('open -a Simulator 2>/dev/null || true');
 
+  // Detect iosApp directory name (default: iosApp)
   const iosDir = path.join(projectDir, 'iosApp');
-  const iosAppName = path.basename(iosDir); // "iosApp"
+  const iosAppName = 'iosApp';
+
+  // Detect shared module name from settings.gradle.kts
+  const sharedModuleName = options.shared || detectSharedModuleName(projectDir);
 
   // ─── Step 3 & 4: Build & Install ───────────────────────
   if (!options.skipBuild) {
+    // ─── Step 3a: Generate dummy framework for CocoaPods ───
+    // The shared KMP framework is built by Gradle during xcodebuild (via script phase).
+    // But CocoaPods needs the framework to exist at `pod install` time to generate
+    // correct linker flags (-framework "shared"). Without this, the shared module's
+    // symbols won't be linked into the app binary, causing runtime crashes.
+    const sharedFrameworkPath = path.join(projectDir, sharedModuleName, 'build', 'cocoapods', 'framework', `${sharedModuleName}.framework`);
+    if (!fs.existsSync(sharedFrameworkPath)) {
+      logger.step(++step, totalSteps, 'Generating dummy framework for CocoaPods...');
+      const gradlew = path.join(projectDir, 'gradlew');
+      const dummyResult = await execAsync(`"${gradlew}" -p "${projectDir}" :${sharedModuleName}:generateDummyFramework`);
+      if (dummyResult.exitCode !== 0) {
+        logger.warn('generateDummyFramework failed. Build may fail due to missing linker flags.');
+      }
+
+      // Re-run pod install so CocoaPods picks up the framework
+      if (commandExists('pod')) {
+        logger.info('Re-running pod install with dummy framework...');
+        await execAsync('pod install', iosDir);
+      }
+    } else {
+      step++; // Keep step numbering consistent
+    }
+
     logger.step(++step, totalSteps, 'Building iOS app...');
 
     const workspaceFiles = fs.existsSync(iosDir)
@@ -224,7 +251,7 @@ async function previewIos(projectDir: string, options: PreviewOptions): Promise<
           message: 'No .xcworkspace found in iosApp/',
           suggestions: [
             'cd iosApp && xcodegen generate && pod install',
-            'Or run: kuikly run ios (which sets up the project first)',
+            'Or run: kuikly create <project> first to set up the project',
           ],
         },
       };
@@ -238,38 +265,59 @@ async function previewIos(projectDir: string, options: PreviewOptions): Promise<
     );
 
     if (buildResult.exitCode !== 0) {
+      const parsed = parseBuildOutput(buildResult.combined);
       return {
         success: false,
         command: 'preview',
         error: {
           code: 'BUILD_FAILED',
-          message: 'iOS build failed',
-          details: buildResult.stderr.slice(-2000), // Last 2000 chars
+          message: parsed.summary || 'iOS build failed',
+          details: buildResult.stderr.slice(-2000),
+          diagnostics: parsed.diagnostics,
+          suggestions: parsed.suggestions,
         },
       };
     }
 
     logger.step(++step, totalSteps, 'Installing app on simulator...');
     const appPath = path.join(iosDir, `build/Build/Products/Debug-iphonesimulator/${iosAppName}.app`);
-    if (fs.existsSync(appPath)) {
-      // Get bundle ID
-      const bundleIdResult = await execAsync(`defaults read "${path.join(appPath, 'Info.plist')}" CFBundleIdentifier`);
-      const bundleId = bundleIdResult.stdout?.trim();
-      if (bundleId) {
-        // Force-stop app before reinstall to ensure fresh launch
-        await execAsync(`xcrun simctl terminate booted ${bundleId} 2>/dev/null || true`);
-      }
-      await execAsync(`xcrun simctl install booted "${appPath}"`);
-      if (bundleId) {
-        await execAsync(`xcrun simctl launch booted ${bundleId}`);
-      }
+    if (!fs.existsSync(appPath)) {
+      return {
+        success: false,
+        command: 'preview',
+        error: {
+          code: 'APP_NOT_FOUND',
+          message: `Built app not found at: ${appPath}`,
+          suggestions: ['Check xcodebuild output for errors'],
+        },
+      };
     }
+
+    // Read actual bundle ID from built app's Info.plist
+    const bundleId = getIosBundleId(appPath);
+    if (!bundleId) {
+      return {
+        success: false,
+        command: 'preview',
+        error: {
+          code: 'CONFIGURATION_ERROR',
+          message: 'Cannot determine CFBundleIdentifier from built app',
+        },
+      };
+    }
+
+    logger.info(`Bundle ID: ${bundleId}`);
+
+    // Uninstall old → install fresh → launch
+    await execAsync(`xcrun simctl uninstall booted ${bundleId} 2>/dev/null || true`);
+    await execAsync(`xcrun simctl install booted "${appPath}"`);
+    await execAsync(`xcrun simctl terminate booted ${bundleId} 2>/dev/null || true`);
+    await execAsync(`xcrun simctl launch booted ${bundleId}`);
   } else {
     // Skip-build mode: just relaunch existing app
     const appPath = path.join(iosDir, `build/Build/Products/Debug-iphonesimulator/${iosAppName}.app`);
     if (fs.existsSync(appPath)) {
-      const bundleIdResult = await execAsync(`defaults read "${path.join(appPath, 'Info.plist')}" CFBundleIdentifier`);
-      const bundleId = bundleIdResult.stdout?.trim();
+      const bundleId = getIosBundleId(appPath);
       if (bundleId) {
         await execAsync(`xcrun simctl terminate booted ${bundleId} 2>/dev/null || true`);
         await execAsync(`xcrun simctl launch booted ${bundleId}`);
@@ -282,7 +330,7 @@ async function previewIos(projectDir: string, options: PreviewOptions): Promise<
   logger.info(`Waiting ${launchTimeout / 1000}s for app to render...`);
   await sleep(launchTimeout);
 
-  // ─── Step 5: Screenshot ─────────────────────────────────
+  // ─── Screenshot ─────────────────────────────────────────
   logger.step(++step, totalSteps, 'Taking screenshot...');
   const screenshotResult = await takeIosScreenshot(device, projectDir, options);
   if (!screenshotResult.success) {
@@ -290,19 +338,22 @@ async function previewIos(projectDir: string, options: PreviewOptions): Promise<
   }
 
   const screenshotPath = screenshotResult.path!;
+  const page = options.page || 'default';
   logger.success(`Screenshot saved: ${screenshotPath}`);
 
   return {
     success: true,
     command: 'preview',
     data: {
-      message: 'Preview captured',
+      message: `Preview captured for page "${page}"`,
       platform: 'ios',
       device,
+      page,
       screenshotPath,
     },
     nextSteps: [
       `View screenshot: open ${screenshotPath}`,
+      'Re-run with --skip-build for faster iteration after code changes',
     ],
   };
 }
@@ -559,6 +610,46 @@ async function takeIosScreenshot(
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * Read CFBundleIdentifier from a built .app's Info.plist.
+ */
+function getIosBundleId(appPath: string): string | null {
+  try {
+    const plistPath = path.join(appPath, 'Info.plist');
+    if (!fs.existsSync(plistPath)) return null;
+    const result = execSync_(`defaults read "${plistPath}" CFBundleIdentifier`, { ignoreError: true });
+    return result?.trim() || null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Detect shared module name from settings.gradle.kts.
+ * Defaults to "shared" if not found.
+ */
+function detectSharedModuleName(projectDir: string): string {
+  const settingsFile = path.join(projectDir, 'settings.gradle.kts');
+  if (!fs.existsSync(settingsFile)) return 'shared';
+  try {
+    const content = fs.readFileSync(settingsFile, 'utf-8');
+    // Look for include(":shared") or include(":myModule")
+    const match = content.match(/include\(":(\w+)"\)/g);
+    if (match) {
+      // Find the first module that isn't androidApp/iosApp/ohosApp
+      for (const m of match) {
+        const name = m.match(/include\(":(\w+)"\)/)?.[1];
+        if (name && !name.endsWith('App')) {
+          return name;
+        }
+      }
+    }
+  } catch {
+    // Fall through
+  }
+  return 'shared';
 }
 
 /**

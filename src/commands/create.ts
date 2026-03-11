@@ -287,6 +287,19 @@ async function runPostCreateSetup(
       nextSteps.unshift(`brew install xcodegen && cd ${config.iosAppName} && xcodegen generate`);
     }
 
+    // Generate dummy framework so CocoaPods can resolve shared pod's vendored_frameworks.
+    // Without this, pod install runs before the shared.framework exists, causing
+    // the shared module to be missing from the linker flags (no -framework "shared").
+    logger.info('Generating dummy framework for CocoaPods...');
+    const gradlew = path.join(outputDir, 'gradlew');
+    const dummyResult = await execAsync(
+      `"${gradlew}" -p "${outputDir}" :${config.sharedModuleName}:generateDummyFramework`,
+      outputDir
+    );
+    if (dummyResult.exitCode !== 0) {
+      logger.warn('generateDummyFramework failed. pod install may not link shared framework correctly.');
+    }
+
     if (commandExists('pod')) {
       logger.info('Found CocoaPods — installing pods...');
       const podResult = await execAsync('pod install --repo-update', iosDir);
