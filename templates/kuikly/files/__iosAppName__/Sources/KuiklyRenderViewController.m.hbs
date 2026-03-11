@@ -1,0 +1,89 @@
+#import "KuiklyRenderViewController.h"
+#import "KuiklyRenderViewControllerBaseDelegator.h"
+#import "KuiklyRenderContextProtocol.h"
+
+@interface KuiklyRenderViewController () <KuiklyRenderViewControllerBaseDelegatorDelegate>
+@property (nonatomic, strong) KuiklyRenderViewControllerBaseDelegator *delegator;
+@end
+
+@implementation KuiklyRenderViewController {
+    NSString *_pageName;
+    NSDictionary *_pageData;
+}
+
+- (instancetype)initWithPageName:(NSString *)pageName pageData:(NSDictionary *)pageData {
+    if (self = [super init]) {
+        _pageName = pageName;
+        _pageData = pageData ?: @{};
+        _delegator = [[KuiklyRenderViewControllerBaseDelegator alloc] initWithPageName:pageName pageData:_pageData];
+        _delegator.delegate = self;
+    }
+    return self;
+}
+
+- (instancetype)init {
+    return [self initWithPageName:@"HelloWorld" pageData:@{}];
+}
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    self.view.backgroundColor = [UIColor whiteColor];
+    [_delegator viewDidLoadWithView:self.view];
+}
+
+- (void)viewDidLayoutSubviews {
+    [super viewDidLayoutSubviews];
+    [_delegator viewDidLayoutSubviews];
+}
+
+- (void)viewWillAppear:(BOOL)animated {
+    [super viewWillAppear:animated];
+    [_delegator viewWillAppear];
+}
+
+- (void)viewDidAppear:(BOOL)animated {
+    [super viewDidAppear:animated];
+    [_delegator viewDidAppear];
+}
+
+- (void)viewWillDisappear:(BOOL)animated {
+    [super viewWillDisappear:animated];
+    [_delegator viewWillDisappear];
+}
+
+- (void)viewDidDisappear:(BOOL)animated {
+    [super viewDidDisappear:animated];
+    [_delegator viewDidDisappear];
+}
+
+#pragma mark - KuiklyRenderViewControllerBaseDelegatorDelegate
+
+- (UIView *)createLoadingView {
+    UIView *loadingView = [[UIView alloc] init];
+    loadingView.backgroundColor = [UIColor whiteColor];
+    return loadingView;
+}
+
+- (UIView *)createErrorView {
+    UIView *errorView = [[UIView alloc] init];
+    errorView.backgroundColor = [UIColor whiteColor];
+    return errorView;
+}
+
+- (void)fetchContextCodeWithPageName:(NSString *)pageName resultCallback:(KuiklyContextCodeCallback)callback {
+    if (callback) {
+        callback(@"shared", nil);
+    }
+}
+
+- (NSDictionary<NSString *, NSObject *> *)contextPageData {
+    NSMutableDictionary *pageData = [NSMutableDictionary dictionary];
+    pageData[@"appId"] = @"1";
+    return pageData;
+}
+
+- (void)dealloc {
+    // Clean up
+}
+
+@end

@@ -11,7 +11,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
     ) -> Bool {
         window = UIWindow(frame: UIScreen.main.bounds)
-        let vc = KuiklyViewController()
+        // Default page; CLI preview overrides via URL scheme
+        let pageName = ProcessInfo.processInfo.environment["KUIKLY_PAGE"] ?? "HelloWorld"
+        let vc = KuiklyRenderViewController(pageName: pageName, pageData: [:])
         let nav = UINavigationController(rootViewController: vc)
         nav.isNavigationBarHidden = true
         window?.rootViewController = nav
