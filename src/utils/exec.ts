@@ -71,9 +71,13 @@ export function getCommandVersion(cmd: string, versionFlag = '--version'): strin
   try {
     // Use 2>&1 to capture stderr (e.g. `java -version` writes to stderr)
     const output = execSync_(`${cmd} ${versionFlag} 2>&1`, { ignoreError: true });
+    // If output contains "not found" or is empty, the command doesn't exist
+    if (!output || /not found|No such file/i.test(output)) {
+      return null;
+    }
     // Extract version-like pattern
     const match = output.match(/(\d+\.\d+[\.\d]*)/);
-    return match ? match[1] : output.split('\n')[0] || null;
+    return match ? match[1] : null;
   } catch {
     return null;
   }
