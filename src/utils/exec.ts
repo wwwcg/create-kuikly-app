@@ -69,10 +69,11 @@ export function commandExists(cmd: string): boolean {
  */
 export function getCommandVersion(cmd: string, versionFlag = '--version'): string | null {
   try {
-    const output = execSync_(`${cmd} ${versionFlag}`, { ignoreError: true });
+    // Use 2>&1 to capture stderr (e.g. `java -version` writes to stderr)
+    const output = execSync_(`${cmd} ${versionFlag} 2>&1`, { ignoreError: true });
     // Extract version-like pattern
     const match = output.match(/(\d+\.\d+[\.\d]*)/);
-    return match ? match[1] : output.split('\n')[0];
+    return match ? match[1] : output.split('\n')[0] || null;
   } catch {
     return null;
   }
