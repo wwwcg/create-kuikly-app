@@ -4,3 +4,13 @@ dist/
 .DS_Store
 *.tgz
 .env
+
+# Test projects created during development
+KuiklyPreviewTest/
+KuiklyTestProject/
+*TestProject/
+
+# Gradle build artifacts inside templates
+templates/**/buildSrc/.gradle/
+templates/**/buildSrc/bin/
+templates/**/.gradle/

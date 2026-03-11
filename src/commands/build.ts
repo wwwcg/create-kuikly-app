@@ -1,7 +1,8 @@
 import * as path from 'path';
 import * as fs from 'fs';
 import { CommandResult } from '../types';
-import { execStream, execAsync, commandExists } from '../utils/exec';
+import { execStream, execStreamCapture, execAsync, commandExists } from '../utils/exec';
+import { parseBuildOutput } from '../utils/build-error-parser';
 import * as logger from '../utils/logger';
 
 export interface BuildOptions {
@@ -98,16 +99,35 @@ export async function build(
   logger.info(`Building for ${platform} (${buildType})...`);
   logger.info(`Running: ${command}`);
 
-  const exitCode = await execStream(command, projectDir);
+  const buildResult = await execStreamCapture(command, projectDir);
 
-  if (exitCode !== 0) {
+  if (buildResult.exitCode !== 0) {
+    const parsed = parseBuildOutput(buildResult.combined);
+
+    // Log structured errors in non-JSON mode
+    if (!logger.isJsonMode() && parsed.diagnostics.length > 0) {
+      logger.section('Build Diagnostics');
+      for (const diag of parsed.diagnostics.filter(d => d.severity === 'error')) {
+        const loc = diag.file ? `${diag.file}${diag.line ? `:${diag.line}` : ''}` : '';
+        logger.error(`[${diag.category}] ${loc ? loc + ' — ' : ''}${diag.message}`);
+      }
+      if (parsed.suggestions.length > 0) {
+        logger.section('Suggestions');
+        parsed.suggestions.forEach((s, i) => {
+          logger.info(`${i + 1}. ${s}`);
+        });
+      }
+    }
+
     return {
       success: false,
       command: 'build',
       error: {
         code: 'BUILD_FAILED',
-        message: `Build failed for ${platform} with exit code ${exitCode}`,
-        details: `Command: ${command}`,
+        message: parsed.summary,
+        details: parsed.rawFailure || `Command: ${command}`,
+        diagnostics: parsed.diagnostics,
+        suggestions: parsed.suggestions,
       },
     };
   }

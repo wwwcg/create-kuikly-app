@@ -98,3 +98,70 @@ export function execStream(
     child.on('error', () => resolve(1));
   });
 }
+
+/**
+ * Result from execStreamCapture — includes exit code and captured output.
+ */
+export interface StreamCaptureResult {
+  exitCode: number;
+  stdout: string;
+  stderr: string;
+  /** Combined stdout + stderr in order received */
+  combined: string;
+}
+
+/**
+ * Run a command, stream output to console (unless silent), and capture all output.
+ * Used when we need both real-time streaming AND the full output for parsing.
+ */
+export function execStreamCapture(
+  command: string,
+  cwd?: string,
+  silent = false
+): Promise<StreamCaptureResult> {
+  return new Promise((resolve) => {
+    const child = execCb(command, {
+      cwd,
+      encoding: 'utf-8',
+      maxBuffer: 50 * 1024 * 1024, // 50MB buffer for large builds
+    });
+
+    const stdoutChunks: string[] = [];
+    const stderrChunks: string[] = [];
+    const combinedChunks: string[] = [];
+
+    child.stdout?.on('data', (data: string) => {
+      stdoutChunks.push(data);
+      combinedChunks.push(data);
+      if (!silent && !logger.isJsonMode()) {
+        process.stdout.write(data);
+      }
+    });
+
+    child.stderr?.on('data', (data: string) => {
+      stderrChunks.push(data);
+      combinedChunks.push(data);
+      if (!silent && !logger.isJsonMode()) {
+        process.stderr.write(data);
+      }
+    });
+
+    child.on('close', (code) => {
+      resolve({
+        exitCode: code || 0,
+        stdout: stdoutChunks.join(''),
+        stderr: stderrChunks.join(''),
+        combined: combinedChunks.join(''),
+      });
+    });
+
+    child.on('error', () => {
+      resolve({
+        exitCode: 1,
+        stdout: stdoutChunks.join(''),
+        stderr: stderrChunks.join(''),
+        combined: combinedChunks.join(''),
+      });
+    });
+  });
+}

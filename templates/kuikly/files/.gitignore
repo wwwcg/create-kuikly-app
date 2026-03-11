@@ -13,3 +13,4 @@ Pods
 !default.xcworkspace
 node_modules
 *.tgz
+.kuikly/

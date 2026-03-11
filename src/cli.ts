@@ -4,6 +4,7 @@ import { createPage } from './commands/create-page';
 import { createComponent } from './commands/create-component';
 import { build } from './commands/build';
 import { runApp } from './commands/run-app';
+import { preview } from './commands/preview';
 import { doctor } from './commands/doctor';
 import { listAvailableTemplates } from './commands/templates-cmd';
 import { publish } from './commands/publish';
@@ -114,6 +115,50 @@ export function createCli(): Command {
     .option('-s, --shared <name>', 'Shared module name', 'shared')
     .action(async (platform: string, options) => {
       const result = await runApp(platform, options);
+      outputResult(result);
+      process.exit(result.success ? 0 : 1);
+    });
+
+  // ═══════════════════════════════════════════════════════
+  // preview — Build, install, launch, and screenshot
+  // ═══════════════════════════════════════════════════════
+  program
+    .command('preview')
+    .argument('<platform>', 'Target platform: android, ios')
+    .description('Build, launch, and take a screenshot for visual verification (AI Agent friendly)')
+    .option('--page <name>', 'Page to navigate to (default: router)', 'router')
+    .option('--device <name>', 'Device/simulator name or serial')
+    .option('--dir <path>', 'Project root directory', process.cwd())
+    .option('-s, --shared <name>', 'Shared module name', 'shared')
+    .option('--skip-build', 'Skip build step (app must already be installed)', false)
+    .option('-o, --output <dir>', 'Output directory for screenshots')
+    .option('--timeout <seconds>', 'Seconds to wait for app to render before screenshotting', '5')
+    .action(async (platform: string, options) => {
+      const result = await preview(platform, {
+        ...options,
+        launchTimeout: parseInt(options.timeout, 10),
+      });
+      outputResult(result);
+      process.exit(result.success ? 0 : 1);
+    });
+
+  // ═══════════════════════════════════════════════════════
+  // screenshot — Quick screenshot of currently running app
+  // ═══════════════════════════════════════════════════════
+  program
+    .command('screenshot')
+    .argument('[platform]', 'Target platform: android, ios', 'android')
+    .description('Take a screenshot of the currently running app (no build)')
+    .option('--device <name>', 'Device/simulator name or serial')
+    .option('--dir <path>', 'Project root directory', process.cwd())
+    .option('-o, --output <dir>', 'Output directory for screenshots')
+    .action(async (platform: string, options) => {
+      // screenshot is just preview with --skip-build and short timeout
+      const result = await preview(platform, {
+        ...options,
+        skipBuild: true,
+        launchTimeout: 1,
+      });
       outputResult(result);
       process.exit(result.success ? 0 : 1);
     });

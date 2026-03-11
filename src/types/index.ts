@@ -133,6 +133,17 @@ export interface CommandResult {
     code: string;
     message: string;
     details?: string;
+    /** Structured build diagnostics (for build/preview failures) */
+    diagnostics?: Array<{
+      severity: 'error' | 'warning';
+      file?: string;
+      line?: number;
+      column?: number;
+      message: string;
+      category: string;
+    }>;
+    /** Suggested fixes */
+    suggestions?: string[];
   };
   /** Created files list (for create commands) */
   files?: string[];

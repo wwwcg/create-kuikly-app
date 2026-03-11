@@ -117,6 +117,67 @@ kuikly run ios                              # Run on iOS Simulator
 kuikly run ios --device "iPhone 15 Pro"     # Specify simulator
 ```
 
+### `kuikly preview <platform>` — Visual verification (AI Agent core)
+
+Build, install, launch, and take a screenshot — the visual feedback loop.
+
+```bash
+# Full flow: build → install → launch → screenshot
+kuikly preview android --page HelloWorld
+
+# Skip build (app already installed, just re-screenshot)
+kuikly preview android --page HelloWorld --skip-build
+
+# Custom screenshot output directory
+kuikly preview android --output ./screenshots
+
+# With timeout for slow renders
+kuikly preview android --page HelloWorld --timeout 10
+
+# AI Agent mode — get structured result with screenshot path
+kuikly --json preview android --page HelloWorld
+```
+
+**JSON output:**
+
+```json
+{
+  "success": true,
+  "command": "preview",
+  "data": {
+    "message": "Preview captured for page \"HelloWorld\"",
+    "platform": "android",
+    "device": "emulator-5554",
+    "page": "HelloWorld",
+    "screenshotPath": "/path/to/project/.kuikly/screenshots/android_HelloWorld_2026-03-06T12-00-00.png",
+    "appId": "com.example.myapp"
+  }
+}
+```
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--page <name>` | Page to navigate to | `router` |
+| `--device <name>` | Device serial or simulator name | Auto-detect |
+| `--skip-build` | Skip build (app must be installed) | `false` |
+| `-o, --output <dir>` | Screenshot output directory | `.kuikly/screenshots/` |
+| `--timeout <seconds>` | Wait time for app to render | `5` |
+
+**Features:**
+- Auto-detects connected devices; auto-boots emulator if none found
+- Structured build error diagnostics on failure (file, line, column, category)
+- Screenshots saved with timestamp for visual history
+
+### `kuikly screenshot [platform]` — Quick screenshot
+
+Capture what's currently on screen (no build, no launch).
+
+```bash
+kuikly screenshot                  # Android (default)
+kuikly screenshot ios              # iOS Simulator
+kuikly --json screenshot android   # Structured output
+```
+
 ### `kuikly publish` — Publish shared module to Maven
 
 ```bash
@@ -214,9 +275,15 @@ kuikly --json create MyApp --package com.example.myapp --skip-setup
 | `TEMPLATE_NOT_FOUND` | Requested template not available |
 | `GENERATION_ERROR` | File generation failed |
 | `NOT_IN_PROJECT` | Command run outside a Kuikly project |
-| `BUILD_FAILED` | Build process returned non-zero |
+| `BUILD_FAILED` | Build process returned non-zero (includes diagnostics) |
 | `INVALID_PLATFORM` | Unrecognized platform argument |
 | `MISSING_DEPS` | Required tools not installed (doctor) |
+| `NO_DEVICE` | No Android device connected and no emulator found |
+| `NO_AVD` | No Android Virtual Device available |
+| `EMULATOR_TIMEOUT` | Emulator failed to boot in time |
+| `SCREENSHOT_FAILED` | Failed to capture or pull screenshot |
+| `CONFIGURATION_ERROR` | Cannot determine project settings |
+| `NO_WORKSPACE` | No .xcworkspace found for iOS build |
 
 ### AI Agent Workflow Example
 
@@ -235,13 +302,57 @@ kuikly --json create-page TodoDetail
 # 4. Add components
 kuikly --json create-component TodoItem
 
-# 5. Build
-kuikly --json build android
+# 5. Build + Preview (visual verification loop)
+kuikly --json preview android --page TodoList
+# → Agent shows screenshot to user
+# → User: "change the header color to blue"
+# → Agent modifies code
+kuikly --json preview android --page TodoList
+# → Agent shows updated screenshot
 
-# 6. Upgrade SDK
+# 6. Quick screenshot (app already running)
+kuikly --json screenshot android
+
+# 7. Build with structured error diagnostics
+kuikly --json build android
+# If build fails, error.diagnostics contains:
+# [{ file: "shared/.../TodoList.kt", line: 42, message: "Unresolved reference: Textview" }]
+# Agent can auto-fix and retry
+
+# 8. Upgrade SDK
 kuikly --json upgrade --dry-run
 kuikly --json upgrade
 ```
+
+### Structured Build Error Diagnostics
+
+When a build fails, the `--json` output includes machine-parseable diagnostics:
+
+```json
+{
+  "success": false,
+  "command": "build",
+  "error": {
+    "code": "BUILD_FAILED",
+    "message": "Execution failed for task ':shared:compileKotlinAndroid'",
+    "diagnostics": [
+      {
+        "severity": "error",
+        "file": "shared/src/commonMain/kotlin/com/example/todo/TodoList.kt",
+        "line": 42,
+        "column": 15,
+        "message": "Unresolved reference: Textview",
+        "category": "kotlin_compilation"
+      }
+    ],
+    "suggestions": [
+      "\"Textview\" is unresolved in .../TodoList.kt:42 — check spelling, imports, and that the dependency is declared"
+    ]
+  }
+}
+```
+
+**Diagnostic categories:** `kotlin_compilation`, `java_compilation`, `dependency_resolution`, `dexing`, `resource`, `configuration`, `sdk_missing`, `version_mismatch`
 
 ---
 
