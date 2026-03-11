@@ -1,7 +1,8 @@
 platform :ios, '14.1'
+source 'https://cdn.cocoapods.org/'
 
 target '{{iosAppName}}' do
-  use_frameworks!
+  # Do NOT use use_frameworks! — matches official Kuikly project setup
   pod '{{sharedModuleName}}', :path => '../{{sharedModuleName}}'
   pod 'OpenKuiklyIOSRender', '{{kuiklyVersion}}'
 end
