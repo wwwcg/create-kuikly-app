@@ -198,14 +198,19 @@ async function previewIos(projectDir: string, options: PreviewOptions): Promise<
 
   // ─── Step 2: Boot Simulator ─────────────────────────────
   logger.step(++step, totalSteps, 'Booting iOS Simulator...');
-  const device = options.device || 'iPhone 16';
+  const device = options.device || await getDefaultIosSimulator();
+  logger.info(`Using simulator: ${device}`);
   await execAsync(`xcrun simctl boot "${device}" 2>/dev/null || true`);
+  // Open Simulator.app so the device window is visible
+  await execAsync('open -a Simulator 2>/dev/null || true');
+
+  const iosDir = path.join(projectDir, 'iosApp');
+  const iosAppName = path.basename(iosDir); // "iosApp"
 
   // ─── Step 3 & 4: Build & Install ───────────────────────
   if (!options.skipBuild) {
     logger.step(++step, totalSteps, 'Building iOS app...');
 
-    const iosDir = path.join(projectDir, 'iosApp');
     const workspaceFiles = fs.existsSync(iosDir)
       ? fs.readdirSync(iosDir).filter(f => f.endsWith('.xcworkspace'))
       : [];
@@ -226,8 +231,9 @@ async function previewIos(projectDir: string, options: PreviewOptions): Promise<
     }
 
     const workspace = workspaceFiles[0];
+    const scheme = workspace.replace('.xcworkspace', '');
     const buildResult = await execStreamCapture(
-      `xcodebuild -workspace ${workspace} -scheme iosApp -destination "platform=iOS Simulator,name=${device}" -derivedDataPath build/ build`,
+      `xcodebuild -workspace ${workspace} -scheme ${scheme} -destination "platform=iOS Simulator,name=${device}" -derivedDataPath build/ build`,
       iosDir,
     );
 
@@ -244,13 +250,29 @@ async function previewIos(projectDir: string, options: PreviewOptions): Promise<
     }
 
     logger.step(++step, totalSteps, 'Installing app on simulator...');
-    const appPath = path.join(iosDir, 'build/Build/Products/Debug-iphonesimulator/iosApp.app');
+    const appPath = path.join(iosDir, `build/Build/Products/Debug-iphonesimulator/${iosAppName}.app`);
     if (fs.existsSync(appPath)) {
-      await execAsync(`xcrun simctl install booted "${appPath}"`);
-      // Get bundle ID and launch
+      // Get bundle ID
       const bundleIdResult = await execAsync(`defaults read "${path.join(appPath, 'Info.plist')}" CFBundleIdentifier`);
-      if (bundleIdResult.stdout) {
-        await execAsync(`xcrun simctl launch booted ${bundleIdResult.stdout.trim()}`);
+      const bundleId = bundleIdResult.stdout?.trim();
+      if (bundleId) {
+        // Force-stop app before reinstall to ensure fresh launch
+        await execAsync(`xcrun simctl terminate booted ${bundleId} 2>/dev/null || true`);
+      }
+      await execAsync(`xcrun simctl install booted "${appPath}"`);
+      if (bundleId) {
+        await execAsync(`xcrun simctl launch booted ${bundleId}`);
+      }
+    }
+  } else {
+    // Skip-build mode: just relaunch existing app
+    const appPath = path.join(iosDir, `build/Build/Products/Debug-iphonesimulator/${iosAppName}.app`);
+    if (fs.existsSync(appPath)) {
+      const bundleIdResult = await execAsync(`defaults read "${path.join(appPath, 'Info.plist')}" CFBundleIdentifier`);
+      const bundleId = bundleIdResult.stdout?.trim();
+      if (bundleId) {
+        await execAsync(`xcrun simctl terminate booted ${bundleId} 2>/dev/null || true`);
+        await execAsync(`xcrun simctl launch booted ${bundleId}`);
       }
     }
   }
@@ -537,4 +559,35 @@ async function takeIosScreenshot(
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * Auto-detect the best available iOS simulator.
+ * Prefers iPhone with highest number, falls back to any available.
+ */
+async function getDefaultIosSimulator(): Promise<string> {
+  try {
+    const result = await execAsync('xcrun simctl list devices available -j');
+    const data = JSON.parse(result.stdout || '{}');
+    const devices: Array<{ name: string; state: string }> = [];
+    for (const [runtime, devList] of Object.entries(data.devices || {})) {
+      if (typeof runtime === 'string' && runtime.includes('iOS')) {
+        devices.push(...(devList as Array<{ name: string; state: string }>));
+      }
+    }
+    // Prefer booted device
+    const booted = devices.find(d => d.state === 'Booted');
+    if (booted) return booted.name;
+    // Prefer iPhone (not iPad), pick highest model number
+    const iphones = devices.filter(d => d.name.startsWith('iPhone'));
+    if (iphones.length > 0) {
+      // Sort by name descending to get newest model
+      iphones.sort((a, b) => b.name.localeCompare(a.name, undefined, { numeric: true }));
+      return iphones[0].name;
+    }
+    if (devices.length > 0) return devices[0].name;
+  } catch {
+    // Fall through
+  }
+  return 'iPhone 16';
 }
