@@ -155,7 +155,7 @@ function checkKotlin(): DoctorCheck {
 }
 
 function checkXcode(): DoctorCheck {
-  const version = getCommandVersion('xcodebuild');
+  const version = getCommandVersion('xcodebuild', '-version');
   if (!version) {
     return {
       name: 'Xcode',
