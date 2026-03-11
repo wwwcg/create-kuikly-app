@@ -120,6 +120,9 @@ async function previewAndroid(projectDir: string, options: PreviewOptions): Prom
     };
   }
 
+  // Force-stop the app first to ensure fresh launch with correct page
+  await execAsync(`adb -s ${deviceSerial} shell am force-stop ${appId}`);
+
   // Build the launch intent
   const page = options.page || 'HelloWorld';
   // KuiklyRenderActivity expects the page name as intent extra "pageName"
