@@ -37,14 +37,17 @@ export async function doctor(): Promise<CommandResult> {
   const hasError = checks.some((c) => c.status === 'error');
   const hasWarning = checks.some((c) => c.status === 'warning');
 
-  logger.doctorResults(checks);
+  // In JSON mode, result() handles all output — skip duplicate printing
+  if (!logger.isJsonMode()) {
+    logger.doctorResults(checks);
 
-  if (hasError) {
-    logger.error('Some required tools are missing. Please install them before creating a project.');
-  } else if (hasWarning) {
-    logger.warn('Some optional tools are missing. Core functionality will work.');
-  } else {
-    logger.success('All checks passed! Your environment is ready for Kuikly development.');
+    if (hasError) {
+      logger.error('Some required tools are missing. Please install them before creating a project.');
+    } else if (hasWarning) {
+      logger.warn('Some optional tools are missing. Core functionality will work.');
+    } else {
+      logger.success('All checks passed! Your environment is ready for Kuikly development.');
+    }
   }
 
   return {
