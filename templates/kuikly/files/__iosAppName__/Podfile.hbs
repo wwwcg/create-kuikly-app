@@ -4,7 +4,7 @@ source 'https://cdn.cocoapods.org/'
 target '{{iosAppName}}' do
   # Do NOT use use_frameworks! — matches official Kuikly project setup
   pod '{{sharedModuleName}}', :path => '../{{sharedModuleName}}'
-  pod 'OpenKuiklyIOSRender', :git => 'git@github.com:Tencent-TDS/KuiklyUI.git', :tag => '{{kuiklyVersion}}'
+  pod 'OpenKuiklyIOSRender', :git => 'https://github.com/Tencent-TDS/KuiklyUI.git', :tag => '{{kuiklyVersion}}'
   pod 'SDWebImage'
 end
 
