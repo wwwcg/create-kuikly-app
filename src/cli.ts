@@ -41,7 +41,7 @@ export function createCli(): Command {
     .option('-t, --template <name>', 'Project template: kuikly (default) or compose')
     .option('-d, --dsl <type>', 'DSL type: kuikly or compose', 'kuikly')
     .option('--kotlin-version <ver>', 'Kotlin version (e.g. 2.1.21)')
-    .option('--kuikly-version <ver>', 'Kuikly SDK version (e.g. 2.7.0)')
+    .option('--kuikly-version <ver>', 'Kuikly SDK version (e.g. 2.16.0)')
     .option('--shared-module <name>', 'Shared module name', 'shared')
     .option('--h5', 'Include H5 web app module', false)
     .option('--miniapp', 'Include mini program app module', false)

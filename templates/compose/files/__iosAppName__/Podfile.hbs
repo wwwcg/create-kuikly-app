@@ -1,9 +1,11 @@
 platform :ios, '14.1'
+source 'https://cdn.cocoapods.org/'
 
 target '{{iosAppName}}' do
   use_frameworks!
   pod '{{sharedModuleName}}', :path => '../{{sharedModuleName}}'
-  pod 'OpenKuiklyIOSRender', '{{kuiklyVersion}}'
+  pod 'OpenKuiklyIOSRender', :git => 'git@github.com:Tencent-TDS/KuiklyUI.git', :tag => '{{kuiklyVersion}}'
+  pod 'SDWebImage'
 end
 
 post_install do |installer|

@@ -181,11 +181,16 @@ export async function createProject(
   nextSteps.push(`cd ${projectName}`);
   if (process.platform === 'darwin') {
     nextSteps.push('# Android: Open project in Android Studio, then Run');
-    nextSteps.push(`# iOS: cd ${config.iosAppName} && pod install && open ${config.iosAppName}.xcworkspace`);
+    if (options.skipSetup) {
+      nextSteps.push(`# iOS: ./gradlew :${config.sharedModuleName}:generateDummyFramework`);
+      nextSteps.push(`#       cd ${config.iosAppName} && xcodegen generate && pod install && open ${config.iosAppName}.xcworkspace`);
+    } else {
+      nextSteps.push(`# iOS: cd ${config.iosAppName} && open ${config.iosAppName}.xcworkspace`);
+    }
   } else {
     nextSteps.push('# Android: Open project in Android Studio, then Run');
   }
-  nextSteps.push('# HarmonyOS: Open ohosApp in DevEco Studio');
+  nextSteps.push(`# HarmonyOS: Open ${config.ohosAppName} in DevEco Studio`);
 
   const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
 
@@ -302,7 +307,7 @@ async function runPostCreateSetup(
 
     if (commandExists('pod')) {
       logger.info('Found CocoaPods — installing pods...');
-      const podResult = await execAsync('pod install --repo-update', iosDir);
+      const podResult = await execAsync('pod install', iosDir);
       if (podResult.exitCode !== 0) {
         logger.warn('pod install failed. Run manually after Gradle sync.');
       }

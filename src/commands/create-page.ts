@@ -138,17 +138,28 @@ internal class ${pageName}Page : BasePager() {
 function generateComposePageContent(packageName: string, pageName: string): string {
   return `package ${packageName}
 
-import com.tencent.kuikly.core.annotations.Page
-import com.tencent.kuikly.compose.ui.Modifier
+import androidx.compose.runtime.Composable
+import com.tencent.kuikly.compose.ComposeContainer
 import com.tencent.kuikly.compose.foundation.layout.*
 import com.tencent.kuikly.compose.material3.Text
-import com.tencent.kuikly.compose.runtime.Composable
+import com.tencent.kuikly.compose.setContent
 import com.tencent.kuikly.compose.ui.Alignment
+import com.tencent.kuikly.compose.ui.Modifier
 import com.tencent.kuikly.compose.ui.unit.sp
+import com.tencent.kuikly.core.annotations.Page
 
 @Page("${pageName}")
+internal class ${pageName}Page : ComposeContainer() {
+    override fun willInit() {
+        super.willInit()
+        setContent {
+            ${pageName}Content()
+        }
+    }
+}
+
 @Composable
-internal fun ${pageName}Page() {
+private fun ${pageName}Content() {
     Column(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.Center,
@@ -177,7 +188,8 @@ function detectProjectSettings(projectDir: string, sharedModule: string): {
     const nsMatch = content.match(/namespace\s*=\s*"([^"]+)"/);
     if (nsMatch) {
       // namespace = "com.example.app.shared" → package = "com.example.app"
-      packageName = nsMatch[1].replace(/\.shared$/, '');
+      const suffix = new RegExp(`\\.${sharedModule.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`);
+      packageName = nsMatch[1].replace(suffix, '');
     }
     if (content.includes('org.jetbrains.compose') || content.includes('plugin.compose')) {
       dsl = 'compose';

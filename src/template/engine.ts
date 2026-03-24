@@ -11,6 +11,9 @@ Handlebars.registerHelper('ne', (a: unknown, b: unknown) => a !== b);
 Handlebars.registerHelper('or', (a: unknown, b: unknown) => a || b);
 Handlebars.registerHelper('and', (a: unknown, b: unknown) => a && b);
 Handlebars.registerHelper('not', (a: unknown) => !a);
+Handlebars.registerHelper('capitalize', (str: unknown) =>
+  typeof str === 'string' && str.length > 0 ? str.charAt(0).toUpperCase() + str.slice(1) : str
+);
 
 /**
  * Binary file extensions that should be copied verbatim, not template-processed.

@@ -94,8 +94,8 @@ export async function upgrade(options: UpgradeOptions): Promise<CommandResult> {
     let podContent = fs.readFileSync(podfilePath, 'utf-8');
     if (currentKuikly) {
       podContent = podContent.replace(
-        new RegExp(`OpenKuiklyIOSRender.*'${currentKuikly.replace(/\./g, '\\.')}'`),
-        `OpenKuiklyIOSRender', '${targetKuikly}'`
+        new RegExp(`(OpenKuiklyIOSRender.*?)${currentKuikly.replace(/\./g, '\\.')}`),
+        `$1${targetKuikly}`
       );
       writeFile(podfilePath, podContent);
       updatedFiles.push(podfilePath);
@@ -116,7 +116,7 @@ export async function upgrade(options: UpgradeOptions): Promise<CommandResult> {
     nextSteps: [
       'Run: ./gradlew clean to clear caches',
       'Sync project in Android Studio',
-      'cd iosApp && pod install --repo-update (if using iOS)',
+      'iOS: ./gradlew :shared:generateDummyFramework && cd iosApp && pod install',
     ],
   };
 }

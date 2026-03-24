@@ -133,7 +133,7 @@ function generateComposeComponent(packageName: string, name: string): string {
 
 import com.tencent.kuikly.compose.foundation.layout.*
 import com.tencent.kuikly.compose.material3.Text
-import com.tencent.kuikly.compose.runtime.Composable
+import androidx.compose.runtime.Composable
 import com.tencent.kuikly.compose.ui.Alignment
 import com.tencent.kuikly.compose.ui.Modifier
 import com.tencent.kuikly.compose.ui.unit.sp
@@ -168,7 +168,10 @@ function detectPackageName(dir: string, module: string): string {
   if (fs.existsSync(gradlePath)) {
     const content = fs.readFileSync(gradlePath, 'utf-8');
     const match = content.match(/namespace\s*=\s*"([^"]+)"/);
-    if (match) return match[1].replace(/\.shared$/, '');
+    if (match) {
+      const suffix = new RegExp(`\\.${module.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`);
+      return match[1].replace(suffix, '');
+    }
   }
   return '';
 }

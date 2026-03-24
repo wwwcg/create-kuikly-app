@@ -64,15 +64,52 @@ class KRImageAdapter(val context: android.content.Context) : IKRImageAdapter {
 
     private fun loadFromBase64(imageLoadOption: HRImageLoadOption, callback: (drawable: Drawable?) -> Unit) {
         execOnSubThread {
+            val options = BitmapFactory.Options()
+            options.inJustDecodeBounds = true
+            val bytes = Base64.decode(imageLoadOption.src.split(",")[1], Base64.DEFAULT)
+            BitmapFactory.decodeByteArray(bytes, 0, bytes.size, options)
             try {
-                val bytes = Base64.decode(imageLoadOption.src.split(",")[1], Base64.DEFAULT)
-                val options = BitmapFactory.Options().apply { inPreferredConfig = Bitmap.Config.ARGB_8888 }
+                options.inPreferredConfig = Bitmap.Config.ARGB_8888
+                options.inJustDecodeBounds = false
+                try {
+                    options.inSampleSize = calculateInSampleSize(
+                        options,
+                        imageLoadOption.requestWidth,
+                        imageLoadOption.requestHeight
+                    )
+                } catch (e: ArithmeticException) {
+                    Log.d("KRImageAdapter", "loadFromBase64: $e")
+                }
                 val bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size, options)
                 callback.invoke(BitmapDrawable(Resources.getSystem(), bitmap))
-            } catch (e: Exception) {
-                Log.e("KRImageAdapter", "loadFromBase64 error: $e")
+            } catch (e: OutOfMemoryError) {
+                Log.e("KRImageAdapter", "oom: $e")
                 callback.invoke(null)
             }
+        }
+    }
+
+    private fun calculateInSampleSize(
+        options: BitmapFactory.Options,
+        reqWidth: Int,
+        reqHeight: Int,
+    ): Int {
+        return if (reqWidth != 0 && reqHeight != 0 && reqWidth != -1 && reqHeight != -1) {
+            var height = options.outHeight
+            var width = options.outWidth
+            var inSampleSize = 1
+            while (height > reqHeight && width > reqWidth) {
+                val heightRatio = (height.toFloat() / reqHeight.toFloat()).roundToInt()
+                val widthRatio = (width.toFloat() / reqWidth.toFloat()).roundToInt()
+                val ratio = if (heightRatio > widthRatio) heightRatio else widthRatio
+                if (ratio < 2) break
+                width = width shr 1
+                height = height shr 1
+                inSampleSize = inSampleSize shl 1
+            }
+            inSampleSize
+        } else {
+            1
         }
     }
 }

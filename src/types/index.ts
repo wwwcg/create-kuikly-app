@@ -45,7 +45,7 @@ export interface TemplateContext extends ProjectConfig {
   isCompose: boolean;
   /** Whether Kotlin 2.x is used */
   isK2: boolean;
-  /** Kuikly version string for dependencies (e.g. "2.7.0-2.1.21") */
+  /** Kuikly version string for dependencies (e.g. "2.16.0-2.1.21") */
   kuiklyDependencyVersion: string;
   /** KSP version matching the Kotlin version */
   kspVersion: string;

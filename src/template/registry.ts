@@ -83,8 +83,8 @@ export function loadBundledRegistry(): TemplateRegistry {
     version: '1.0.0',
     baseUrl: DEFAULT_REGISTRY_URL.replace('/registry.json', ''),
     kuiklyVersions: {
-      latest: '2.7.0',
-      supported: ['2.7.0'],
+      latest: '2.16.0',
+      supported: ['2.16.0'],
     },
     kotlinVersions: {
       latest: '2.1.21',
