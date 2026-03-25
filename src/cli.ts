@@ -12,8 +12,11 @@ import { upgrade } from './commands/upgrade';
 import { setJsonMode } from './utils/logger';
 import * as logger from './utils/logger';
 import { CommandResult } from './types';
+import * as path from 'path';
+import * as fs from 'fs';
 
-const VERSION = '0.1.0';
+const pkg = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'package.json'), 'utf-8'));
+const VERSION: string = pkg.version;
 
 export function createCli(): Command {
   const program = new Command();
