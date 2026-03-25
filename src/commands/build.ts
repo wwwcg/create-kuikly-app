@@ -11,6 +11,10 @@ export interface BuildOptions {
   shared?: string;
 }
 
+function capitalize(s: string): string {
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
 type Platform = 'android' | 'ios' | 'ohos' | 'h5';
 
 /**
@@ -69,14 +73,16 @@ export async function build(
       break;
 
     case 'ohos': {
-      // Ohos uses a different settings file
+      const ohosTask = options.release
+        ? 'linkReleaseSharedOhosArm64'
+        : 'linkDebugSharedOhosArm64';
       const settingsFile = path.join(projectDir, 'settings.ohos.gradle.kts');
       if (fs.existsSync(settingsFile)) {
-        command = `${gradlew} -c settings.ohos.gradle.kts :${shared}:assembleOhosRelease`;
+        command = `${gradlew} -c settings.ohos.gradle.kts :${shared}:${ohosTask}`;
       } else {
-        command = `${gradlew} :${shared}:assembleOhosRelease`;
+        command = `${gradlew} :${shared}:${ohosTask}`;
       }
-      outputInfo = `${shared}/build/outputs/ohos/`;
+      outputInfo = `${shared}/build/bin/ohosArm64/shared${buildType}Shared/`;
       break;
     }
 
@@ -132,6 +138,11 @@ export async function build(
     };
   }
 
+  // For ohos: copy .so and header to ohosApp after successful build
+  if (platform === 'ohos') {
+    copyOhosArtifacts(projectDir, shared, buildType);
+  }
+
   logger.success(`Build successful! Output: ${outputInfo}`);
 
   return {
@@ -144,4 +155,36 @@ export async function build(
       outputDir: outputInfo,
     },
   };
+}
+
+function copyOhosArtifacts(projectDir: string, shared: string, buildType: string): void {
+  const variant = `${shared}${buildType}Shared`;
+  const srcDir = path.join(projectDir, shared, 'build', 'bin', 'ohosArm64', variant);
+  const ohosLibDir = path.join(projectDir, 'ohosApp', 'entry', 'libs', 'arm64-v8a');
+  const ohosHeaderDir = path.join(projectDir, 'ohosApp', 'entry', 'src', 'main', 'cpp', 'thirdparty', 'biz_entry');
+
+  if (!fs.existsSync(srcDir)) {
+    logger.warn(`Build output not found at ${srcDir}, skipping artifact copy.`);
+    return;
+  }
+
+  fs.mkdirSync(ohosLibDir, { recursive: true });
+  fs.mkdirSync(ohosHeaderDir, { recursive: true });
+
+  const soFile = path.join(srcDir, `lib${shared}.so`);
+  const headerFile = path.join(srcDir, `lib${shared}_api.h`);
+
+  let copied = 0;
+  if (fs.existsSync(soFile)) {
+    fs.copyFileSync(soFile, path.join(ohosLibDir, `lib${shared}.so`));
+    copied++;
+  }
+  if (fs.existsSync(headerFile)) {
+    fs.copyFileSync(headerFile, path.join(ohosHeaderDir, `lib${shared}_api.h`));
+    copied++;
+  }
+
+  if (copied > 0) {
+    logger.info(`Copied ${copied} artifact(s) to ohosApp (libs + headers).`);
+  }
 }

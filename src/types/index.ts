@@ -55,6 +55,12 @@ export interface TemplateContext extends ProjectConfig {
   composeVersion: string;
   /** Gradle version */
   gradleVersion: string;
+  /** HarmonyOS custom Kotlin version (e.g. "2.0.21-KBA-010") */
+  ohosKotlinVersion: string;
+  /** HarmonyOS KSP version (e.g. "2.0.21-1.0.27") */
+  ohosKspVersion: string;
+  /** HarmonyOS Kuikly dependency version (e.g. "2.16.0-2.0.21-ohos") */
+  ohosKuiklyDependencyVersion: string;
 }
 
 /**
@@ -73,6 +79,10 @@ export interface TemplateRegistry {
     latest: string;
     supported: string[];
   };
+  /** HarmonyOS custom Kotlin version */
+  ohosKotlinVersion?: string;
+  /** HarmonyOS KSP version */
+  ohosKspVersion?: string;
   /** Available project templates */
   templates: TemplateInfo[];
 }

@@ -108,7 +108,7 @@ export function createCli(): Command {
   // ═══════════════════════════════════════════════════════
   program
     .command('run')
-    .argument('<platform>', 'Target platform: android, ios')
+    .argument('<platform>', 'Target platform: android, ios, ohos')
     .description('Build and run the app on a connected device or simulator')
     .option('--device <name>', 'Device/simulator name (iOS: "iPhone 15")')
     .option('--dir <path>', 'Project root directory', process.cwd())

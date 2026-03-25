@@ -120,6 +120,9 @@ export async function createProject(
     agpVersion: versionInfo.agpVersion,
     composeVersion: versionInfo.composeVersion,
     gradleVersion: versionInfo.gradleVersion,
+    ohosKotlinVersion: registry.ohosKotlinVersion || '2.0.21-KBA-010',
+    ohosKspVersion: registry.ohosKspVersion || '2.0.21-1.0.27',
+    ohosKuiklyDependencyVersion: `${kuiklyVersion}-2.0.21-ohos`,
   });
 
   // Log config

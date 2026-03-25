@@ -20,5 +20,9 @@ dependencyResolutionManagement {
     }
 }
 
+val ohosBuildfFileName = "build.ohos.gradle.kts"
+rootProject.buildFileName = ohosBuildfFileName
 rootProject.name = "{{projectName}}"
+
 include(":{{sharedModuleName}}")
+project(":{{sharedModuleName}}").buildFileName = ohosBuildfFileName

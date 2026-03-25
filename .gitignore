@@ -15,3 +15,4 @@ templates/**/buildSrc/.gradle/
 templates/**/buildSrc/bin/
 templates/**/.gradle/
 .npmrc
+.hvigor/

@@ -9,6 +9,8 @@
     "latest": "2.1.21",
     "supported": ["1.9.22", "2.1.21"]
   },
+  "ohosKotlinVersion": "2.0.21-KBA-010",
+  "ohosKspVersion": "2.0.21-1.0.27",
   "templates": [
     {
       "name": "kuikly",

@@ -147,6 +147,9 @@ export function buildContext(config: {
   agpVersion: string;
   composeVersion: string;
   gradleVersion: string;
+  ohosKotlinVersion: string;
+  ohosKspVersion: string;
+  ohosKuiklyDependencyVersion: string;
 }): TemplateContext {
   return {
     ...config,
