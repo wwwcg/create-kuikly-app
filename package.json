@@ -1,6 +1,6 @@
 {
   "name": "create-kuikly-app",
-  "version": "0.2.5",
+  "version": "0.2.6",
   "description": "CLI tool to create Kuikly cross-platform projects. AI Agent friendly.",
   "keywords": [
     "kuikly",
