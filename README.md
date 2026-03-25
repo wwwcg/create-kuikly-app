@@ -115,6 +115,7 @@ kuikly build h5                   # H5 web bundle
 kuikly run android                          # Run on connected Android device/emulator
 kuikly run ios                              # Run on iOS Simulator
 kuikly run ios --device "iPhone 15 Pro"     # Specify simulator
+kuikly run ohos                             # Build shared .so, package HAP, guide signing
 ```
 
 ### `kuikly preview <platform>` — Visual verification (AI Agent core)
@@ -207,6 +208,10 @@ kuikly doctor
 # ✓ Android SDK — Found at /Users/you/Library/Android/sdk
 # ✓ XcodeGen (2.42.0) — Installed
 # ✓ CocoaPods (1.16.2) — Installed
+# ✓ OpenHarmony SDK — DevEco-Studio.app
+# ✓ hvigorw (4.x) — Installed
+# ✓ ohpm (5.x) — Installed
+# ✓ hdc — Installed
 # ...
 ```
 
@@ -435,6 +440,8 @@ Run `kuikly doctor` to verify your environment. Required tools:
 | Xcode | ⚠️ | iOS builds (macOS only) |
 | XcodeGen | ⚠️ | Generate Xcode project |
 | CocoaPods | ⚠️ | iOS dependency management |
+| DevEco Studio | ⚠️ | HarmonyOS builds and signing |
+| hvigorw / ohpm | ⚠️ | HarmonyOS build tools (bundled with DevEco Studio) |
 | Gradle | ⚠️ | Project wrapper setup |
 | Git | ⚠️ | Version control |
 
