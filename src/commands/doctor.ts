@@ -30,6 +30,12 @@ export async function doctor(): Promise<CommandResult> {
     checks.push(checkCocoaPods());
   }
 
+  // ─── HarmonyOS / OpenHarmony ─────────────────────────
+  checks.push(checkOhosSdk());
+  checks.push(checkHvigor());
+  checks.push(checkOhpm());
+  checks.push(checkHdc());
+
   // ─── Git ─────────────────────────────────────────────
   checks.push(checkGit());
 
@@ -202,6 +208,103 @@ function checkCocoaPods(): DoctorCheck {
   }
   return {
     name: 'CocoaPods',
+    status: 'ok',
+    version,
+    message: 'Installed',
+  };
+}
+
+function checkOhosSdk(): DoctorCheck {
+  const devEcoHome = process.env.DEVECO_SDK_HOME;
+  const hosHome = process.env.HOS_SDK_HOME;
+  const ohosHome = process.env.OHOS_SDK_HOME;
+  const sdkEnv = devEcoHome || hosHome || ohosHome;
+
+  const fs = require('fs');
+  const path = require('path');
+  const home = process.env.HOME || process.env.USERPROFILE || '';
+
+  const idePaths = [
+    '/Applications/DevEco-Studio.app',
+    `${home}/Applications/DevEco-Studio.app`,
+    `${home}/deveco-studio`,
+    '/opt/deveco-studio',
+    `${home}/DevEco-Studio`,
+  ];
+  const ideFound = idePaths.find((p) => fs.existsSync(p));
+
+  const cliToolsPresent = commandExists('hvigorw') && commandExists('ohpm');
+
+  if (!sdkEnv && !ideFound && !cliToolsPresent) {
+    return {
+      name: 'OpenHarmony SDK',
+      status: 'warning',
+      message: 'Not found (needed for HarmonyOS builds)',
+      fix: 'Install DevEco Studio or command-line tools, and set DEVECO_SDK_HOME / HOS_SDK_HOME. See https://developer.huawei.com/consumer/cn/deveco-studio/',
+    };
+  }
+
+  const details: string[] = [];
+  if (ideFound) details.push(`IDE: ${path.basename(ideFound)}`);
+  if (sdkEnv) details.push(`SDK: ${sdkEnv}`);
+  if (!ideFound && !sdkEnv && cliToolsPresent) details.push('CLI tools in PATH');
+
+  return {
+    name: 'OpenHarmony SDK',
+    status: 'ok',
+    version: sdkEnv || (ideFound ? path.basename(ideFound) : 'cli-tools'),
+    message: details.join(', '),
+  };
+}
+
+function checkHvigor(): DoctorCheck {
+  const version = getCommandVersion('hvigorw');
+  if (!version) {
+    return {
+      name: 'hvigorw',
+      status: 'warning',
+      message: 'Not found (HarmonyOS build tool)',
+      fix: 'Install DevEco Studio or OpenHarmony command-line tools, then add hvigor/bin to PATH',
+    };
+  }
+  return {
+    name: 'hvigorw',
+    status: 'ok',
+    version,
+    message: 'Installed',
+  };
+}
+
+function checkOhpm(): DoctorCheck {
+  const version = getCommandVersion('ohpm');
+  if (!version) {
+    return {
+      name: 'ohpm',
+      status: 'warning',
+      message: 'Not found (OpenHarmony package manager)',
+      fix: 'Install DevEco Studio or OpenHarmony command-line tools, then add ohpm/bin to PATH',
+    };
+  }
+  return {
+    name: 'ohpm',
+    status: 'ok',
+    version,
+    message: 'Installed',
+  };
+}
+
+function checkHdc(): DoctorCheck {
+  const version = getCommandVersion('hdc', 'version');
+  if (!version) {
+    return {
+      name: 'hdc',
+      status: 'warning',
+      message: 'Not found (HarmonyOS device connector)',
+      fix: 'Install DevEco Studio or OpenHarmony command-line tools, then add SDK toolchains dir to PATH',
+    };
+  }
+  return {
+    name: 'hdc',
     status: 'ok',
     version,
     message: 'Installed',
