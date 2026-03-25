@@ -200,67 +200,35 @@ async function runOhos(projectDir: string, options: RunOptions): Promise<Command
   }
   logger.info('Copied .so and header to ohosApp.');
 
-  // Step 3: Build ohosApp with hvigorw
-  if (!commandExists('hvigorw')) {
-    return {
-      success: false,
-      command: 'run',
-      error: {
-        code: 'HVIGOR_NOT_FOUND',
-        message: 'hvigorw not found. Install DevEco Studio or add hvigor/bin to PATH.',
-      },
-    };
+  // Step 3: Install ohpm dependencies
+  if (commandExists('ohpm')) {
+    logger.info('Installing HarmonyOS dependencies (ohpm install)...');
+    const ohpmResult = await execStream('ohpm install', ohosDir);
+    if (ohpmResult !== 0) {
+      logger.warn('ohpm install failed. You may need to run it manually in ohosApp/.');
+    }
   }
 
-  logger.info('Building HarmonyOS app with hvigorw...');
-  const hvigorResult = await execStream('hvigorw assembleHap --mode module -p module=entry@default -p product=default --no-daemon', ohosDir);
-  if (hvigorResult !== 0) {
-    return {
-      success: false,
-      command: 'run',
-      error: {
-        code: 'BUILD_FAILED',
-        message: 'HarmonyOS app build failed',
-        details: 'Check hvigorw output for details.',
-      },
-    };
-  }
-
-  // Step 4: Install and launch via hdc
-  if (!commandExists('hdc')) {
-    logger.warn('hdc not found. Build succeeded — install the .hap manually via DevEco Studio.');
-    return {
-      success: true,
-      command: 'run',
-      data: {
-        message: 'HarmonyOS app built. Install manually (hdc not found).',
-        platform: 'ohos',
-      },
-    };
-  }
-
-  const hapPath = path.join(ohosDir, 'entry', 'build', 'default', 'outputs', 'default', 'entry-default-signed.hap');
-  const unsignedHap = path.join(ohosDir, 'entry', 'build', 'default', 'outputs', 'default', 'entry-default-unsigned.hap');
-  const hapToInstall = fs.existsSync(hapPath) ? hapPath : fs.existsSync(unsignedHap) ? unsignedHap : '';
-
-  if (!hapToInstall) {
-    logger.warn('Built .hap not found at expected path. Open ohosApp in DevEco Studio to install.');
-    return {
-      success: true,
-      command: 'run',
-      data: {
-        message: 'HarmonyOS app built but .hap not found for auto-install.',
-        platform: 'ohos',
-      },
-    };
-  }
-
-  logger.info('Installing HarmonyOS app via hdc...');
-  await execStream(`hdc install "${hapToInstall}"`, ohosDir);
+  // Step 4: Guide user to DevEco Studio
+  // HarmonyOS apps require code-signing to install on devices/emulators.
+  // DevEco Studio handles signing automatically with a logged-in Huawei developer account.
+  logger.success('HarmonyOS shared module built and artifacts prepared.');
+  logger.info('');
+  logger.info('Next steps to run on device/emulator:');
+  logger.info('  1. Open the ohosApp/ directory in DevEco Studio');
+  logger.info('  2. Sign in with your Huawei developer account (for auto-signing)');
+  logger.info('  3. Select a device or emulator, then click Run');
+  logger.info('');
+  logger.info('HarmonyOS apps require code-signing — DevEco Studio handles this automatically.');
+  logger.info(`Project path: ${ohosDir}`);
 
   return {
     success: true,
     command: 'run',
-    data: { message: 'HarmonyOS app installed', platform: 'ohos' },
+    data: {
+      message: 'HarmonyOS shared module built. Open ohosApp/ in DevEco Studio to run.',
+      platform: 'ohos',
+      ohosDir,
+    },
   };
 }
