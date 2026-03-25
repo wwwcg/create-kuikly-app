@@ -50,7 +50,7 @@ export async function createPage(
   }
 
   const packageName = options.package || detected.packageName;
-  const dsl = options.dsl || detected.dsl || 'compose';
+  const dsl = options.dsl || detected.dsl || 'kuikly';
   const sharedModule = options.module || 'shared';
   const packagePath = packageName.replace(/\./g, '/');
 
@@ -179,7 +179,7 @@ function detectProjectSettings(projectDir: string, sharedModule: string): {
   dsl: string;
 } {
   let packageName = '';
-  let dsl = 'compose';
+  let dsl = 'kuikly';
 
   // Try to read shared module's build.gradle.kts for package info
   const buildGradlePath = path.join(projectDir, sharedModule, 'build.gradle.kts');

@@ -87,7 +87,7 @@ export async function createProject(
   // ─── 4. Resolve parameters ───────────────────────────
   logger.step(2, 6, 'Resolving project configuration...');
 
-  const dsl = (options.dsl === 'kuikly' ? 'kuikly' : 'compose') as 'kuikly' | 'compose';
+  const dsl = (options.dsl === 'compose' ? 'compose' : 'kuikly') as 'kuikly' | 'compose';
   const templateName = options.template || dsl;
   const kotlinVersion = options.kotlinVersion || registry.kotlinVersions.latest;
   const kuiklyVersion = options.kuiklyVersion || registry.kuiklyVersions.latest;

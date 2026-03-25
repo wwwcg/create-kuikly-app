@@ -182,5 +182,5 @@ function detectDsl(dir: string, module: string): string {
     const content = fs.readFileSync(gradlePath, 'utf-8');
     if (content.includes('org.jetbrains.compose')) return 'compose';
   }
-  return 'compose';
+  return 'kuikly';
 }

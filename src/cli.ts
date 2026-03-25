@@ -39,7 +39,7 @@ export function createCli(): Command {
     .description('Create a new Kuikly cross-platform project')
     .option('-p, --package <name>', 'Java/Kotlin package name (e.g. com.example.myapp)')
     .option('-t, --template <name>', 'Project template: kuikly (default) or compose')
-    .option('-d, --dsl <type>', 'DSL type: compose or kuikly', 'compose')
+    .option('-d, --dsl <type>', 'DSL type: kuikly or compose', 'kuikly')
     .option('--kotlin-version <ver>', 'Kotlin version (e.g. 2.1.21)')
     .option('--kuikly-version <ver>', 'Kuikly SDK version (e.g. 2.16.0)')
     .option('--shared-module <name>', 'Shared module name', 'shared')
