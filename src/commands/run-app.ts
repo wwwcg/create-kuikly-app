@@ -1,7 +1,7 @@
 import * as path from 'path';
 import * as fs from 'fs';
 import { CommandResult } from '../types';
-import { execStream, execAsync, commandExists } from '../utils/exec';
+import { execStream, execAsync, commandExists, resolveAndroidSdk } from '../utils/exec';
 import * as logger from '../utils/logger';
 
 export interface RunOptions {
@@ -39,6 +39,7 @@ export async function runApp(
 }
 
 async function runAndroid(projectDir: string, options: RunOptions): Promise<CommandResult> {
+  ensureLocalProperties(projectDir);
   const gradlew = process.platform === 'win32' ? 'gradlew.bat' : './gradlew';
 
   logger.info('Building and installing Android app...');
@@ -294,4 +295,25 @@ async function runOhos(projectDir: string, options: RunOptions): Promise<Command
       ohosDir,
     },
   };
+}
+
+function ensureLocalProperties(projectDir: string): void {
+  const localProps = path.join(projectDir, 'local.properties');
+  if (fs.existsSync(localProps)) {
+    const content = fs.readFileSync(localProps, 'utf-8');
+    if (content.includes('sdk.dir')) return;
+  }
+
+  const sdkPath = resolveAndroidSdk(projectDir);
+  if (!sdkPath) return;
+
+  const escaped = sdkPath.replace(/\\/g, '\\\\');
+  const line = `sdk.dir=${escaped}\n`;
+
+  if (fs.existsSync(localProps)) {
+    fs.appendFileSync(localProps, line);
+  } else {
+    fs.writeFileSync(localProps, line);
+  }
+  logger.info(`Auto-configured sdk.dir in local.properties → ${sdkPath}`);
 }

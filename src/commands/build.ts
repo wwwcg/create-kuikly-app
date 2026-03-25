@@ -1,7 +1,7 @@
 import * as path from 'path';
 import * as fs from 'fs';
 import { CommandResult } from '../types';
-import { execStream, execStreamCapture, execAsync, commandExists } from '../utils/exec';
+import { execStream, execStreamCapture, execAsync, commandExists, resolveAndroidSdk } from '../utils/exec';
 import { parseBuildOutput } from '../utils/build-error-parser';
 import * as logger from '../utils/logger';
 
@@ -52,6 +52,9 @@ export async function build(
       },
     };
   }
+
+  // Ensure local.properties has sdk.dir so Gradle can find the Android SDK
+  ensureLocalProperties(projectDir);
 
   const gradlew = process.platform === 'win32' ? 'gradlew.bat' : './gradlew';
   const buildType = options.release ? 'Release' : 'Debug';
@@ -187,4 +190,25 @@ function copyOhosArtifacts(projectDir: string, shared: string, buildType: string
   if (copied > 0) {
     logger.info(`Copied ${copied} artifact(s) to ohosApp (libs + headers).`);
   }
+}
+
+function ensureLocalProperties(projectDir: string): void {
+  const localProps = path.join(projectDir, 'local.properties');
+  if (fs.existsSync(localProps)) {
+    const content = fs.readFileSync(localProps, 'utf-8');
+    if (content.includes('sdk.dir')) return;
+  }
+
+  const sdkPath = resolveAndroidSdk(projectDir);
+  if (!sdkPath) return;
+
+  const escaped = sdkPath.replace(/\\/g, '\\\\');
+  const line = `sdk.dir=${escaped}\n`;
+
+  if (fs.existsSync(localProps)) {
+    fs.appendFileSync(localProps, line);
+  } else {
+    fs.writeFileSync(localProps, line);
+  }
+  logger.info(`Auto-configured sdk.dir in local.properties → ${sdkPath}`);
 }

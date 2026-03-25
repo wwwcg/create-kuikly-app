@@ -1,5 +1,5 @@
 import { CommandResult, DoctorCheck } from '../types';
-import { commandExists, getCommandVersion, execSync_ } from '../utils/exec';
+import { commandExists, getCommandVersion, execSync_, resolveAndroidSdk } from '../utils/exec';
 import * as logger from '../utils/logger';
 
 /**
@@ -126,20 +126,22 @@ function checkGradle(): DoctorCheck {
 }
 
 function checkAndroidSdk(): DoctorCheck {
-  const androidHome = process.env.ANDROID_HOME || process.env.ANDROID_SDK_ROOT;
-  if (!androidHome) {
+  const sdkPath = resolveAndroidSdk();
+  if (!sdkPath) {
     return {
       name: 'Android SDK',
       status: 'warning',
-      message: 'ANDROID_HOME not set',
-      fix: 'Install Android Studio or set ANDROID_HOME environment variable',
+      message: 'Android SDK not found',
+      fix: 'Install Android Studio, or set ANDROID_HOME. Common paths: ~/Library/Android/sdk (macOS), ~/Android/Sdk (Linux)',
     };
   }
+  const fromEnv = process.env.ANDROID_HOME || process.env.ANDROID_SDK_ROOT;
+  const note = fromEnv ? '' : ' (auto-detected, consider setting ANDROID_HOME)';
   return {
     name: 'Android SDK',
     status: 'ok',
-    version: androidHome,
-    message: `Found at ${androidHome}`,
+    version: sdkPath,
+    message: `Found at ${sdkPath}${note}`,
   };
 }
 

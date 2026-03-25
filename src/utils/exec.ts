@@ -170,3 +170,49 @@ export function execStreamCapture(
     });
   });
 }
+
+/**
+ * Resolve the Android SDK root directory by checking (in order):
+ * 1. ANDROID_HOME / ANDROID_SDK_ROOT environment variables
+ * 2. local.properties sdk.dir in the given project directory
+ * 3. Common default installation paths per platform
+ *
+ * Returns the path if found, or null.
+ */
+export function resolveAndroidSdk(projectDir?: string): string | null {
+  const fs = require('fs');
+  const path = require('path');
+
+  // 1. Environment variables
+  const envSdk = process.env.ANDROID_HOME || process.env.ANDROID_SDK_ROOT;
+  if (envSdk && fs.existsSync(envSdk)) return envSdk;
+
+  // 2. local.properties in project
+  if (projectDir) {
+    const localProps = path.join(projectDir, 'local.properties');
+    if (fs.existsSync(localProps)) {
+      const content = fs.readFileSync(localProps, 'utf-8');
+      const match = content.match(/sdk\.dir\s*=\s*(.+)/);
+      if (match) {
+        const sdkDir = match[1].trim().replace(/\\\\/g, '/');
+        if (fs.existsSync(sdkDir)) return sdkDir;
+      }
+    }
+  }
+
+  // 3. Common default paths
+  const home = process.env.HOME || process.env.USERPROFILE || '';
+  const candidates = [
+    path.join(home, 'Library', 'Android', 'sdk'),       // macOS (Android Studio)
+    path.join(home, 'Android', 'Sdk'),                   // Linux (Android Studio)
+    path.join(home, 'AppData', 'Local', 'Android', 'Sdk'), // Windows
+    '/opt/android-sdk',                                   // CI / custom
+    '/usr/local/share/android-sdk',                       // Homebrew
+  ];
+
+  for (const candidate of candidates) {
+    if (fs.existsSync(candidate)) return candidate;
+  }
+
+  return null;
+}

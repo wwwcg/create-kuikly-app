@@ -1,7 +1,7 @@
 import * as path from 'path';
 import * as fs from 'fs';
 import { CommandResult } from '../types';
-import { execSync_, execAsync, execStreamCapture, commandExists } from '../utils/exec';
+import { execSync_, execAsync, execStreamCapture, commandExists, resolveAndroidSdk } from '../utils/exec';
 import { parseBuildOutput } from '../utils/build-error-parser';
 import * as logger from '../utils/logger';
 
@@ -400,7 +400,7 @@ async function ensureAndroidDevice(preferredDevice?: string): Promise<DeviceChec
         suggestions: [
           'Connect a device via USB with USB debugging enabled, or',
           'Create an AVD in Android Studio and start it, or',
-          'Set ANDROID_HOME to point to your Android SDK',
+          'Ensure ANDROID_HOME is set, or install Android Studio (SDK auto-detected at ~/Library/Android/sdk)',
         ],
       },
     };
@@ -459,13 +459,11 @@ async function ensureAndroidDevice(preferredDevice?: string): Promise<DeviceChec
 }
 
 function getEmulatorPath(): string | null {
-  // Try emulator from PATH
   if (commandExists('emulator')) {
     return 'emulator';
   }
 
-  // Try ANDROID_HOME
-  const androidHome = process.env.ANDROID_HOME || process.env.ANDROID_SDK_ROOT;
+  const androidHome = resolveAndroidSdk();
   if (androidHome) {
     const emulatorBin = path.join(androidHome, 'emulator', 'emulator');
     if (fs.existsSync(emulatorBin)) {

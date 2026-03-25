@@ -129,13 +129,26 @@ export function parseBuildOutput(combined: string): ParsedBuildError {
   }
 
   // ─── SDK missing ───────────────────────────────────────
-  if (combined.includes('SDK location not found') || combined.includes('ANDROID_HOME')) {
-    diagnostics.push({
-      severity: 'error',
-      message: 'Android SDK not found. Set ANDROID_HOME environment variable.',
-      category: 'sdk_missing',
-    });
-    suggestions.push('Set ANDROID_HOME: export ANDROID_HOME=/path/to/android/sdk');
+  if (
+    combined.includes('SDK location not found') ||
+    combined.includes('ANDROID_HOME is not set') ||
+    combined.includes('No installed build tools found') ||
+    /ANDROID_HOME\s+(?:is\s+)?(?:not\s+set|undefined|missing)/i.test(combined)
+  ) {
+    const sdkPath = require('./exec').resolveAndroidSdk();
+    if (sdkPath) {
+      suggestions.push(
+        `Android SDK detected at ${sdkPath} but Gradle can't find it. ` +
+        `Add sdk.dir=${sdkPath.replace(/\\/g, '\\\\\\\\')} to local.properties, or set ANDROID_HOME=${sdkPath}`
+      );
+    } else {
+      diagnostics.push({
+        severity: 'error',
+        message: 'Android SDK not found.',
+        category: 'sdk_missing',
+      });
+      suggestions.push('Install Android Studio, or set ANDROID_HOME to your SDK path');
+    }
   }
 
   // ─── Unresolved reference (common Kotlin error) ────────
